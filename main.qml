@@ -10,19 +10,30 @@ Window {
 	title: qsTr("Hello World")
 	id: theWindow
 
-	ScrollView
+	Flickable
 	{
+		id: myFlickable
 		Keys.onEscapePressed: theWindow.close()
 
-		anchors.fill:parent
+		anchors.fill: parent
+
 		contentWidth: myStupidView.width
 		contentHeight: myStupidView.height
 
+		clip: true
+
 		DataSetView
 		{
+			z: -1
 			Keys.onEscapePressed: theWindow.close()
 			id: myStupidView
 			model: myStupidModel
+
+			viewportX: myFlickable.visibleArea.xPosition
+			viewportY: myFlickable.visibleArea.yPosition
+			viewportW: myFlickable.visibleArea.widthRatio
+			viewportH: myFlickable.visibleArea.heightRatio
+
 			//color: "pink"
 			//width: 1000
 			//height: 1000
@@ -30,5 +41,9 @@ Window {
 
 			//anchors.fill: parent
 		}
+
+		ScrollBar.vertical: ScrollBar { z:2}
+		ScrollBar.horizontal: ScrollBar { z:2}
 	}
 }
+
