@@ -3,12 +3,11 @@
 #include <QSGFlatColorMaterial>
 #include <QSGGeometry>
 #include <QSGNode>
-
 #include <queue>
-#include <QFontMetricsF>
 
 
-DataSetView::DataSetView()
+
+DataSetView::DataSetView() : _metricsFont(_font)
 {
 	setFlag(QQuickItem::ItemHasContents, true);
 
@@ -20,6 +19,8 @@ DataSetView::DataSetView()
 	connect(this, &DataSetView::viewportYChanged, this, &DataSetView::viewportChanged);
 	connect(this, &DataSetView::viewportWChanged, this, &DataSetView::viewportChanged);
 	connect(this, &DataSetView::viewportHChanged, this, &DataSetView::viewportChanged);
+
+	setProperty("ikBestaNiet", "Nu wel!");
 
 }
 
@@ -40,6 +41,9 @@ void DataSetView::setModel(QAbstractTableModel * model)
 		_model = model;
 
 		setRolenames();
+
+		QSizeF calcedSizeRowNumber = _metricsFont.size(Qt::TextSingleLine, QString::fromStdString(std::to_string(_model->rowCount())));
+		_rowNumberMaxWidth = calcedSizeRowNumber.width() + 20;
 
 		//recalculateCellSizes = true;
 		calculateCellContentSizes();
@@ -73,18 +77,13 @@ void DataSetView::calculateCellContentSizes()
 			storeTextItem(row.first, col.first);
 
 	_cellSizes.resize(_model->columnCount());
-	_cellPositions.resize(_model->columnCount());
+	_colXPositions.resize(_model->columnCount());
 	_cellTextItems.clear();
-
-
-	QFontMetricsF metricsFont(_font);
 
 	for(int col=0; col<_model->columnCount(); col++)
 	{
-		_cellPositions[col].resize(_model->rowCount());
-
 		QString text = _model->headerData(col, Qt::Orientation::Horizontal, _roleNameToRole["maxColString"]).toString();
-		QSizeF calcedSize = metricsFont.size(Qt::TextSingleLine, text);
+		QSizeF calcedSize = _metricsFont.size(Qt::TextSingleLine, text);
 
 		_cellSizes[col] = calcedSize;
 	}
@@ -104,20 +103,19 @@ void DataSetView::calculateCellSizes()
 
 	_dataRowsMaxHeight = _model->columnCount() == 0 ? 0 : _cellSizes[0].height() + _itemVerticalPadding * 2;
 
-	float w=0;
+	float w=_rowNumberMaxWidth;
 	for(int col=0; col<_model->columnCount(); col++)
 		w += _dataColsMaxWidth[col];
 
-	for(int row=0; row<_model->rowCount(); row++)
-	{
-		float x = _itemHorizontalPadding;
 
-		for(int col=0; col<_model->columnCount(); col++)
-		{
-			_cellPositions[col][row] = QVector2D(x, row * _dataRowsMaxHeight);
-			x += _dataColsMaxWidth[col];
-		}
+	float x = _itemHorizontalPadding + _rowNumberMaxWidth;
+
+	for(int col=0; col<_model->columnCount(); col++)
+	{
+		_colXPositions[col] = x;
+		x += _dataColsMaxWidth[col];
 	}
+
 
 	setWidth(w);
 	setHeight( _dataRowsMaxHeight * _model->rowCount());
@@ -180,6 +178,12 @@ void DataSetView::viewportChanged()
 			for(int col=currentViewportColMax; col < _previousViewportColMax; col++)
 				storeTextItem(row, col);
 		}
+
+		for(int row=_previousViewportRowMin; row < currentViewportRowMin; row++)
+			storeRowNumber(row);
+
+		for(int row=currentViewportRowMax; row < _previousViewportRowMax; row++)
+			storeRowNumber(row);
 	}
 
 	_lines.clear();
@@ -187,9 +191,6 @@ void DataSetView::viewportChanged()
 	//and now we should create some new ones!
 
 	for(int col=currentViewportColMin; col<currentViewportColMax; col++)
-	{
-		QSizeF size = _cellSizes[col];
-
 		for(int row=currentViewportRowMin; row<currentViewportRowMax; row++)
 		{
 			int lineFlags = _model->data(_model->index(row, col), _roleNameToRole["lines"]).toInt();
@@ -197,7 +198,8 @@ void DataSetView::viewportChanged()
 			bool left = lineFlags & 1 > 0,  right = lineFlags & 2 > 0, up = lineFlags & 4 > 0, down = lineFlags & 8 > 0;
 
 			createTextItem(row, col);
-			QVector2D pos(_cellPositions[col][row].x() - _itemHorizontalPadding, _cellPositions[col][row].y() - _itemVerticalPadding);
+			QVector2D pos(_colXPositions[col] - _itemHorizontalPadding, row * _dataRowsMaxHeight);
+
 
 
 			if(left)	_lines.push_back(std::make_pair(QVector2D(pos.x(),								pos.y() + _dataRowsMaxHeight),	pos));
@@ -206,7 +208,9 @@ void DataSetView::viewportChanged()
 			if(down)	_lines.push_back(std::make_pair(QVector2D(pos.x() + _dataColsMaxWidth[col], pos.y()) ,						QVector2D(pos.x() + _dataColsMaxWidth[col], pos.y() + _dataRowsMaxHeight)));
 
 		}
-	}
+
+	for(int row=currentViewportRowMin; row<currentViewportRowMax; row++)
+		createRowNumber(row);
 
 	update();
 
@@ -259,8 +263,8 @@ QQuickItem * DataSetView::createTextItem(int row, int col)
 		bool active = _model->data(ind, _roleNameToRole["active"]).toBool();
 		textItem->setProperty("color", active ? "black" : "grey");
 		textItem->setProperty("text", _model->data(ind));
-		textItem->setX(_cellPositions[col][row].x());
-		textItem->setY(_cellPositions[col][row].y());
+		textItem->setX(_colXPositions[col]);
+		textItem->setY(_itemVerticalPadding + row * _dataRowsMaxHeight);
 		textItem->setVisible(true);
 
 		_cellTextItems[col][row] = textItem;
@@ -289,6 +293,75 @@ void DataSetView::storeTextItem(int row, int col)
 	textItem->setVisible(false);
 
 	_textItemStorage.push(textItem);
+}
+
+
+
+QQuickItem * DataSetView::createRowNumber(int row)
+{
+	//std::cout << "createRowNumber("<<row<<") called!\n" << std::flush;
+
+	if(_rowNumberDelegate == NULL)
+		return NULL;
+
+	QQuickItem * rowNumber = NULL;
+
+	if(_rowNumberItems.count(row) == 0  || _rowNumberItems[row] == NULL)
+	{
+
+		if(_rowNumberStorage.size() > 0)
+		{
+#ifdef DEBUG_VIEWPORT
+			std::cout << "createRowNumber("<<row<<") from storage!\n" << std::flush;
+#endif
+			rowNumber = _rowNumberStorage.top();
+			_rowNumberStorage.pop();
+		}
+		else
+		{
+#ifdef DEBUG_VIEWPORT
+			std::cout << "createRowNumber("<<row<<") ex nihilo!\n" << std::flush;
+#endif
+			rowNumber = qobject_cast<QQuickItem*>(_rowNumberDelegate->create());
+			rowNumber->setParent(this);
+			rowNumber->setParentItem(this);
+		}
+
+		rowNumber->setProperty("z", 10);
+		rowNumber->setProperty("text", QString::fromStdString(std::to_string(row)));
+
+		rowNumber->setY(_dataRowsMaxHeight * row);
+		rowNumber->setHeight(_dataRowsMaxHeight);
+		rowNumber->setWidth(_rowNumberMaxWidth);
+
+		rowNumber->setVisible(true);
+
+		_rowNumberItems[row] = rowNumber;
+	}
+	else
+		rowNumber = _rowNumberItems[row];
+
+	rowNumber->setX(_viewportX * width());
+
+	return _rowNumberItems[row];
+}
+
+void DataSetView::storeRowNumber(int row)
+{
+#ifdef DEBUG_VIEWPORT
+	std::cout << "storeTextItem("<<row<<", "<<col<<") in storage!\n" << std::flush;
+#endif
+
+	if(_rowNumberItems.count(row) == 0  || _rowNumberItems[row] == NULL) return;
+
+	QQuickItem * rowNumber = _rowNumberItems[row];
+	_rowNumberItems[row] = NULL;
+
+	_rowNumberItems.erase(row);
+
+	rowNumber->setVisible(false);
+
+	_rowNumberStorage.push(rowNumber);
 }
 
 void DataSetView::myParentChanged(QQuickItem * newParentItem)

@@ -9,6 +9,7 @@
 #include <QSGFlatColorMaterial>
 #include <iostream>
 #include <map>
+#include <QFontMetricsF>
 
 //#define DEBUG_VIEWPORT
 
@@ -24,6 +25,8 @@ class DataSetView : public QQuickItem
 	Q_PROPERTY( float viewportY				READ viewportY				WRITE setViewportY				NOTIFY viewportYChanged )
 	Q_PROPERTY( float viewportW				READ viewportW				WRITE setViewportW				NOTIFY viewportWChanged )
 	Q_PROPERTY( float viewportH				READ viewportH				WRITE setViewportH				NOTIFY viewportHChanged )
+
+	Q_PROPERTY( QQmlComponent * rowNumberDelegate	READ rowNumberDelegate		WRITE setRowNumberDelegate		NOTIFY rowNumberDelegateChanged )
 
 	Q_PROPERTY( QFont font	MEMBER _font)
 
@@ -45,6 +48,8 @@ public:
 	float viewportW()				{ return _viewportW; }
 	float viewportH()				{ return _viewportH; }
 
+	QQmlComponent * rowNumberDelegate() { return _rowNumberDelegate; }
+
 	void setViewportX(float newViewportX);
 	void setViewportY(float newViewportY);
 	void setViewportW(float newViewportW);
@@ -54,15 +59,19 @@ public:
 	void setItemHorizontalPadding(float newHorizontalPadding)	{ if(newHorizontalPadding != _itemHorizontalPadding)	{ _itemHorizontalPadding = newHorizontalPadding;	emit itemHorizontalPaddingChanged(); }}
 	void setItemVerticalPadding(float newVerticalPadding)		{ if(newVerticalPadding != _itemVerticalPadding)		{ _itemVerticalPadding = newVerticalPadding;		emit itemVerticalPaddingChanged(); }}
 
+	void setRowNumberDelegate(QQmlComponent * newDelegate)		{ if(newDelegate != _rowNumberDelegate)					{ _rowNumberDelegate = newDelegate;					emit rowNumberDelegateChanged(); }}
+
 protected:
 	QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data) override;
 
 	QAbstractTableModel * _model = NULL;
 
 	std::vector<QSizeF> _cellSizes; //[col]
-	std::vector<std::vector<QVector2D>>  _cellPositions; //[col][row]
+	std::vector<float>  _colXPositions; //[col][row]
 	std::map<int, std::map<int, QQuickItem *>> _cellTextItems;			//[col][row]
+	std::map<int, QQuickItem *> _rowNumberItems;
 	std::stack<QQuickItem*> _textItemStorage;
+	std::stack<QQuickItem*> _rowNumberStorage;
 	std::vector<float> _dataColsMaxWidth;
 	std::vector<std::pair<QVector2D, QVector2D>> _lines;
 
@@ -73,6 +82,7 @@ protected:
 	float _fontPixelSize = 20;
 	float _itemHorizontalPadding = 8;
 	float _itemVerticalPadding = 8;
+	QQmlComponent * _rowNumberDelegate = NULL;
 
 	QSGFlatColorMaterial material;
 
@@ -84,10 +94,16 @@ protected:
 	QQuickItem * createTextItem(int row, int col);
 	void storeTextItem(int row, int col);
 
+	QQuickItem * createRowNumber(int row);
+	void storeRowNumber(int row);
+
+	QFontMetricsF _metricsFont;
 
 	std::map<std::string, int> _roleNameToRole;
 
 	void setRolenames();
+
+	float _rowNumberMaxWidth = 0;
 
 signals:
 	void modelChanged();
@@ -99,6 +115,7 @@ signals:
 	void viewportYChanged();
 	void viewportWChanged();
 	void viewportHChanged();
+	void rowNumberDelegateChanged();
 
 
 

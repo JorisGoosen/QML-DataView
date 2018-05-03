@@ -40,6 +40,31 @@ Window {
 			//text: "aaaaaaa"
 
 			//anchors.fill: parent
+
+			rowNumberDelegate:
+			Item
+			{
+				property alias text: tekst.text
+
+				Rectangle
+				{
+					z: -1
+					border.color: "red"
+					border.width: 1
+					color: "yellow"
+
+					width: parent.width
+					height: parent.height + 1
+				}
+
+				Text
+				{
+					id: tekst
+					color: "blue"
+					anchors.centerIn: parent
+				}
+			}
+
 		}
 
 		ScrollBar.vertical: ScrollBar { z:2}
