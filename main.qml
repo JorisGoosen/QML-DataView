@@ -15,39 +15,16 @@ Window {
 
 		anchors.fill: parent
 
-		Flickable
+		JASPDataView
 		{
-			id: myFlickable
-			Keys.onEscapePressed: theWindow.close()
+
 
 			anchors.top: parent.top
 			anchors.left: parent.left
 			anchors.right: parent.right
 			anchors.bottom: buttons.top
 
-			contentWidth: myStupidView.width
-			contentHeight: myStupidView.height
-
-			clip: true
-
-			DataSetView
-			{
-				z: -1
-				Keys.onEscapePressed: theWindow.close()
-				id: myStupidView
-				model: myStupidModel
-
-				viewportX: myFlickable.visibleArea.xPosition * width
-				viewportY: myFlickable.visibleArea.yPosition * height
-				viewportW: myFlickable.visibleArea.widthRatio * width
-				viewportH: myFlickable.visibleArea.heightRatio * height
-
-			}
-
-
-			ScrollBar.vertical: ScrollBar { z:2}
-			ScrollBar.horizontal: ScrollBar { z:2}
-
+			model: myStupidModel
 		}
 
 		Item
