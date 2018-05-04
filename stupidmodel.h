@@ -28,7 +28,7 @@ public:
 
 private:
 	//std::vector<std::vector<QString>> myData;
-	int colSize = 10000, rowSize = 17000000;
+	int colSize = 100, rowSize = 170;
 };
 
 #endif // STUPIDMODEL_H

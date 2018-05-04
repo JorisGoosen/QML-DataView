@@ -10,65 +10,86 @@ Window {
 	title: qsTr("Hello World")
 	id: theWindow
 
-	Flickable
+	/*Item
 	{
-		id: myFlickable
-		Keys.onEscapePressed: theWindow.close()
+		id: backRect
+		//color: "purple"
 
-		anchors.fill: parent
+		z: -1*/
 
-		contentWidth: myStupidView.width
-		contentHeight: myStupidView.height
-
-		clip: true
-
-		DataSetView
+		Flickable
 		{
-			z: -1
+			id: myFlickable
 			Keys.onEscapePressed: theWindow.close()
-			id: myStupidView
-			model: myStupidModel
 
-			viewportX: myFlickable.visibleArea.xPosition
-			viewportY: myFlickable.visibleArea.yPosition
-			viewportW: myFlickable.visibleArea.widthRatio
-			viewportH: myFlickable.visibleArea.heightRatio
+			anchors.fill: parent
 
-			//color: "pink"
-			//width: 1000
-			//height: 1000
-			//text: "aaaaaaa"
+			contentWidth: myStupidView.width
+			contentHeight: myStupidView.height
 
-			//anchors.fill: parent
+			clip: true
 
-			rowNumberDelegate:
-			Item
+
+
+			/*MouseArea
 			{
-				property alias text: tekst.text
+				anchors.fill: parent
+				onClicked: backRect.color = "black"
+				z: 5
+*/
+			DataSetView
+			{
+				z: -1
+				Keys.onEscapePressed: theWindow.close()
+				id: myStupidView
+				model: myStupidModel
 
-				Rectangle
+				viewportX: myFlickable.visibleArea.xPosition * width
+				viewportY: myFlickable.visibleArea.yPosition * height
+				viewportW: myFlickable.visibleArea.widthRatio * width
+				viewportH: myFlickable.visibleArea.heightRatio * height
+
+
+
+				/*rowNumberDelegate:
+				Item
 				{
-					z: -1
-					border.color: "red"
-					border.width: 1
-					color: "yellow"
+					property alias text: tekst.text
 
-					width: parent.width
-					height: parent.height + 1
-				}
+					Button
+					{
+						id: tekst
 
-				Text
-				{
-					id: tekst
-					color: "blue"
-					anchors.centerIn: parent
-				}
+						width: parent.width
+						height: parent.height + 1
+
+						property color myColor: "yellow"
+
+						onClicked:
+						{
+							myColor = "blue"
+
+						}
+
+						background: Rectangle
+						{
+							id: myBackground
+							z: 0
+							border.color: "red"
+							border.width: 1
+							color: tekst.myColor
+						}
+
+						//preventStealing: true
+					}
+				}*/
+
 			}
+		//	}
 
-		}
+			ScrollBar.vertical: ScrollBar { z:2}
+			ScrollBar.horizontal: ScrollBar { z:2}
 
-		ScrollBar.vertical: ScrollBar { z:2}
-		ScrollBar.horizontal: ScrollBar { z:2}
 	}
 }
 
