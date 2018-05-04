@@ -48,6 +48,11 @@ void DataSetView::setModel(QAbstractTableModel * model)
 		std::cout << "model set!\n" << std::flush;
 		_model = model;
 
+		connect(_model, &QAbstractTableModel::dataChanged,			this, &DataSetView::modelDataChanged);
+		connect(_model, &QAbstractTableModel::headerDataChanged,	this, &DataSetView::modelHeaderDataChanged);
+		connect(_model, &QAbstractTableModel::modelAboutToBeReset,	this, &DataSetView::modelAboutToBeReset);
+		connect(_model, &QAbstractTableModel::modelReset,			this, &DataSetView::modelWasReset);
+
 		setRolenames();
 
 		QSizeF calcedSizeRowNumber = _metricsFont.size(Qt::TextSingleLine, QString::fromStdString(std::to_string(_model->rowCount())));
@@ -80,8 +85,11 @@ void DataSetView::calculateCellSizes()
 	_dataColsMaxWidth.clear();
 
 	for(auto col : _cellTextItems)
+	{
 		for(auto row : col.second)
-			storeTextItem(row.first, col.first);
+			storeTextItem(row.first, col.first, false);
+		col.second.clear();
+	}
 
 	_cellSizes.resize(_model->columnCount());
 	_colXPositions.resize(_model->columnCount());
@@ -318,7 +326,7 @@ QQuickItem * DataSetView::createTextItem(int row, int col)
 	return _cellTextItems[col][row];
 }
 
-void DataSetView::storeTextItem(int row, int col)
+void DataSetView::storeTextItem(int row, int col, bool cleanUp)
 {
 #ifdef DEBUG_VIEWPORT
 	std::cout << "storeTextItem("<<row<<", "<<col<<") in storage!\n" << std::flush;
@@ -330,10 +338,13 @@ void DataSetView::storeTextItem(int row, int col)
 	QQuickItem * textItem = _cellTextItems[col][row];
 	_cellTextItems[col][row] = NULL;
 
-	_cellTextItems[col].erase(row);
+	if(cleanUp)
+	{
+		_cellTextItems[col].erase(row);
 
-	if(_cellTextItems[col].size() == 0)
-		_cellTextItems.erase(col);
+		if(_cellTextItems[col].size() == 0)
+			_cellTextItems.erase(col);
+	}
 
 	textItem->setVisible(false);
 
@@ -747,4 +758,25 @@ void DataSetView::setViewportH(float newViewportH)
 		_viewportH = newViewportH;
 		emit viewportHChanged();
 	}
+}
+
+void DataSetView::modelDataChanged(const QModelIndex & begin, const QModelIndex & end, const QVector<int> & roles)
+{
+	calculateCellSizes();
+}
+
+void DataSetView::modelHeaderDataChanged(Qt::Orientation orientation, int first, int last)
+{
+	calculateCellSizes();
+}
+
+void DataSetView::modelAboutToBeReset()
+{
+
+}
+
+void DataSetView::modelWasReset()
+{
+	setRolenames();
+	calculateCellSizes();
 }

@@ -104,7 +104,7 @@ protected:
 	int _previousViewportColMin = -1, _previousViewportColMax = -1, _previousViewportRowMin = -1, _previousViewportRowMax = -1, _viewportMargin = 10;
 
 	QQuickItem * createTextItem(int row, int col);
-	void storeTextItem(int row, int col);
+	void storeTextItem(int row, int col, bool cleanUp = true);
 
 	QQuickItem * createRowNumber(int row);
 	void storeRowNumber(int row);
@@ -154,6 +154,10 @@ public slots:
 
 	void calculateCellSizes();
 
+	void modelDataChanged(const QModelIndex & begin, const QModelIndex & end, const QVector<int> & roles);
+	void modelHeaderDataChanged(Qt::Orientation orientation, int first, int last);
+	void modelAboutToBeReset();
+	void modelWasReset();
 
 };
 

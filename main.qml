@@ -10,33 +10,26 @@ Window {
 	title: qsTr("Hello World")
 	id: theWindow
 
-	/*Item
+	Item
 	{
-		id: backRect
-		//color: "purple"
 
-		z: -1*/
+		anchors.fill: parent
 
 		Flickable
 		{
 			id: myFlickable
 			Keys.onEscapePressed: theWindow.close()
 
-			anchors.fill: parent
+			anchors.top: parent.top
+			anchors.left: parent.left
+			anchors.right: parent.right
+			anchors.bottom: buttons.top
 
 			contentWidth: myStupidView.width
 			contentHeight: myStupidView.height
 
 			clip: true
 
-
-
-			/*MouseArea
-			{
-				anchors.fill: parent
-				onClicked: backRect.color = "black"
-				z: 5
-*/
 			DataSetView
 			{
 				z: -1
@@ -49,46 +42,46 @@ Window {
 				viewportW: myFlickable.visibleArea.widthRatio * width
 				viewportH: myFlickable.visibleArea.heightRatio * height
 
-
-
-				/*rowNumberDelegate:
-				Item
-				{
-					property alias text: tekst.text
-
-					Button
-					{
-						id: tekst
-
-						width: parent.width
-						height: parent.height + 1
-
-						property color myColor: "yellow"
-
-						onClicked:
-						{
-							myColor = "blue"
-
-						}
-
-						background: Rectangle
-						{
-							id: myBackground
-							z: 0
-							border.color: "red"
-							border.width: 1
-							color: tekst.myColor
-						}
-
-						//preventStealing: true
-					}
-				}*/
-
 			}
-		//	}
+
 
 			ScrollBar.vertical: ScrollBar { z:2}
 			ScrollBar.horizontal: ScrollBar { z:2}
+
+		}
+
+		Item
+		{
+			id: buttons
+			height: 20
+			anchors.left: parent.left
+			anchors.right: parent.right
+			anchors.bottom: parent.bottom
+
+			Button
+			{
+				id: randomShit
+				onClicked: myStupidModel.randomShit()
+
+				text: "random shit!"
+				anchors.top: parent.top
+				anchors.left: parent.left
+				anchors.right: parent.horizontalCenter
+				anchors.bottom: parent.bottom
+			}
+
+			Button
+			{
+				id: resetMe
+				onClicked: myStupidModel.resetMe()
+
+				text: "reset!"
+				anchors.top: parent.top
+				anchors.left: parent.horizontalCenter
+				anchors.right: parent.right
+				anchors.bottom: parent.bottom
+			}
+		}
 
 	}
 }

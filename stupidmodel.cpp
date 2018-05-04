@@ -23,7 +23,7 @@ QVariant  StupidModel::data(const QModelIndex &index, int role) const
 		bool iAmActive = index.row() % 7 < 3;
 
 		if(role == Qt::DisplayRole)
-			return QVariant(QString::fromStdString("Cell(" + std::to_string(index.column()) + ", " + std::to_string(index.row()) + ")"));//myData[index.column()][index.row()]);
+			return QVariant(QString::fromStdString("Cell(" + std::to_string(index.column()) + ", " + std::to_string(index.row()) + ")")+ getExtraShit(index.column()));//myData[index.column()][index.row()]);
 		else if(role == (int)specialRoles::active)
 			return iAmActive;
 		else if(role == (int)specialRoles::lines)
@@ -49,7 +49,7 @@ QVariant StupidModel::headerData(int section, Qt::Orientation orientation, int r
 		if(role == Qt::DisplayRole)
 			return QVariant(QString::fromStdString("Column " + std::to_string(section)));
 		else if(role == (int)specialRoles::maxColString) //A query from DataSetView for the maximumlength string to be expected! This to accomodate columnwidth
-			return QVariant(QString::fromStdString("Cell("+std::to_string(section) + ", " + std::to_string(rowCount()) + ")")); //In this case this means the last element because that has the highest rownumber!
+			return QVariant(QString::fromStdString("Cell("+std::to_string(section) + ", " + std::to_string(rowCount()) + ")" )+ getExtraShit(section)); //In this case this means the last element because that has the highest rownumber!
 	}
 	else if(section < rowCount())
 	{
@@ -71,3 +71,13 @@ QHash<int, QByteArray> StupidModel::roleNames() const
 
 	return roles;
 }
+
+void StupidModel::randomShit()
+{
+	int randomNumber = rand()%columnCount();
+
+	extraShit[randomNumber] = extraShit[randomNumber] + "?";
+
+	emit dataChanged(index(randomNumber, 1), index(randomNumber, columnCount()));
+}
+

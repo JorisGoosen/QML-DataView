@@ -25,10 +25,17 @@ public:
 
 	QHash<int, QByteArray> roleNames() const;
 
+	Q_INVOKABLE void resetMe() { beginResetModel(); endResetModel(); }
+	Q_INVOKABLE void randomShit();
+
+	QString getExtraShit(int col) const { return extraShit.count(col) > 0 ?  extraShit.at(col) : ""; }
+
 
 private:
 	//std::vector<std::vector<QString>> myData;
-	int colSize = 100, rowSize = 170;
+	int colSize = 10, rowSize = 10000;
+
+	std::map<int, QString> extraShit;
 };
 
 #endif // STUPIDMODEL_H
